@@ -1,26 +1,36 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { Home } from "./Pages";
+import navRoutes from "./Routes/routes";
+// import { Provider } from "react-redux";
+// import { store } from "./store";
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+interface routeType {
+  path: string;
+  component: React.FC;
 }
+
+const App = () => {
+  return (
+    // <Provider store={store}>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />}>
+          {navRoutes?.map((route: routeType, index: number) => {
+            const routProps = {
+              path: route.path,
+              Component: route.component,
+            };
+            if (index === 0) {
+              return <Route index key={route.path + index} {...routProps} />;
+            } else {
+              return <Route key={route.path + index} {...routProps} />;
+            }
+          })}
+        </Route>
+      </Routes>
+    </Router>
+    // </Provider>
+  );
+};
 
 export default App;

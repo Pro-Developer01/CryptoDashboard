@@ -27,9 +27,9 @@ const Sidebar: React.FC = () => {
             <div
               className={`flex gap-3 ${
                 activePath === item.path
-                  ? " border-l-4 text-yellow-500 "
-                  : "border-0 text-white "
-              } border-yellow-500 pl-9 min-h-[30px] mb-9 cursor-pointer hover:text-yellow-500 `}
+                  ? " border-l-4 text-yellow-500 pl-9"
+                  : "border-0 text-white pl-[39px]"
+              } border-yellow-500  min-h-[30px] mb-9 cursor-pointer hover:text-yellow-500 `}
             >
               <span className="text-white">{item.icon}</span>{" "}
               <span className="font-semibold">{item.label}</span>

@@ -1,13 +1,9 @@
 import React from "react";
 import { Table, Button } from "antd";
-import {
-  WalletOutlined,
-  SwapOutlined,
-  DeleteOutlined,
-} from "@ant-design/icons";
+import { DeleteOutlined } from "@ant-design/icons";
 import { Sidebar } from "../Components";
 
-const Dashboard: React.FC = () => {
+const WalletList: React.FC = () => {
   const columns = [
     {
       title: "Coin",
@@ -46,10 +42,7 @@ const Dashboard: React.FC = () => {
   ];
 
   return (
-    <div className="bg-gray-900 min-h-screen text-gray-200 p-6">
-      <div className="flex">
-        <Sidebar />
-        <div className="w-3/4">
+        <div className="w-full">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl">Total Coins - 7</h2>
             <Button
@@ -79,9 +72,7 @@ const Dashboard: React.FC = () => {
             />
           </div>
         </div>
-      </div>
-    </div>
   );
 };
 
-export default Dashboard;
+export default WalletList;

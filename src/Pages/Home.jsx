@@ -17,7 +17,7 @@ export default function Home() {
         {/* Side Bar  */}
         <Sidebar />
         {/* Main dashBoard  */}
-        <div className="w-3/4">
+        <div className="w-3/4 pt-[100px] pl-11">
           <Outlet />
         </div>
       </div>

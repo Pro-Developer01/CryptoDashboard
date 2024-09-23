@@ -1,6 +1,5 @@
 import React from "react";
 import { transactionsState } from "../Recoil/atoms";
-import { Table } from "antd";
 import { useRecoilValue } from "recoil";
 import { Transaction } from "../Types";
 import CustomTable from "../Components/CustomTable";

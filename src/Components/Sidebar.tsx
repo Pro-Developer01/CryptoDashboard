@@ -1,6 +1,6 @@
 import React from "react";
 import { WalletOutlined, SwapOutlined } from "@ant-design/icons";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 const menuItems = [
   {
     label: "Wallets",

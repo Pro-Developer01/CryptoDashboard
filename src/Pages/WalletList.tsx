@@ -7,6 +7,7 @@ import fetchTransactions from "../Apis/fetchTransactions";
 import { useRecoilState } from "recoil";
 import { walletsState, syncQueueState, syncStatusState } from "../Recoil/atoms";
 import { Wallet, SyncItem } from "../Types";
+import CustomTable from "../Components/CustomTable";
 
 const data = [
   { key: "1", coin: "BITCOIN", holding: "BTC 0.00256" },
@@ -198,29 +199,7 @@ const WalletList: React.FC = () => {
         <span className="inline-block text-xs font-semibold mb-4 pl-6">
           Total Coins - {data?.length || 0}
         </span>
-        <Table
-          columns={columns}
-          dataSource={data}
-          pagination={false}
-          className="!bg-black"
-          rowClassName={() => "bg-[#161C23] hover:!bg-black"}
-          components={{
-            header: {
-              cell: ({ children }: any) => (
-                <th className="!bg-gray-900 !border-0 !text-white-800 font-normal py-2 ">
-                  {children}
-                </th>
-              ),
-            },
-            body: {
-              cell: ({ children }: any) => (
-                <td className=" text-white-700 !border-b-[11px] !border-black font-normal py-2 ">
-                  {children}
-                </td>
-              ),
-            },
-          }}
-        />
+        <CustomTable columns={columns} dataSource={data} />
         <Modal
           title="Import Wallet"
           visible={isImportModalVisible}

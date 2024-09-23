@@ -3,6 +3,9 @@ import { transactionsState } from "../Recoil/atoms";
 import { Table } from "antd";
 import { useRecoilValue } from "recoil";
 import { Transaction } from "../Types";
+import CustomTable from "../Components/CustomTable";
+import BitcoinIcon from "../Assets/BitcoinIcon";
+import DownArrow from "../Assets/DownArrow";
 const dataSource: Transaction[] = [
   {
     time: "12/11/2020 10:31:20 AM",
@@ -48,11 +51,7 @@ const columns = [
     key: "time",
     render: (text: string) => (
       <div className="flex items-center">
-        <img
-          src="https://cryptologos.cc/logos/bitcoin--logo.png?v=022"
-          alt="Bitcoin"
-          className="w-6 h-6 mr-2"
-        />
+        <BitcoinIcon />
         <div>{text}</div>
       </div>
     ),
@@ -67,12 +66,18 @@ const columns = [
     title: "Amount",
     dataIndex: "amount",
     key: "amount",
+    render: (text: string) => <span>{text} BTC</span>,
   },
   {
     title: "Result",
     dataIndex: "result",
     key: "result",
-    render: (text: string) => <span className="text-blue-500">{text}</span>,
+    render: (text: string) => (
+      <span className="flex gap-1 justify-center items-center text-blue-500">
+        <DownArrow />
+        {text}
+      </span>
+    ),
   },
   {
     title: "Status",
@@ -86,14 +91,16 @@ export default function Transactions() {
   console.log({ transactions });
 
   return (
-    <div className="bg-gray-900 p-6">
-      <Table
-        dataSource={dataSource}
-        columns={columns}
-        pagination={false}
-        rowKey="time"
-        className="bg-gray-800 text-white"
-      />
+    <div className="w-full">
+      <div className="flex justify-between items-center mb-14">
+        <span className="text-xl text-yellow-600 font-bold">Transactions</span>
+      </div>
+      <div className="bg-gray-900 text-gray-300">
+        <span className="inline-block text-xs font-semibold mb-4 pl-6">
+          Total Transactions - {dataSource.length || 0}
+        </span>
+        <CustomTable columns={columns} dataSource={dataSource}></CustomTable>
+      </div>
     </div>
   );
 }

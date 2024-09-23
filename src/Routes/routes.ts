@@ -1,4 +1,7 @@
-import { WalletList } from "../Pages";
+import React from "react";
+
+const WalletList = React.lazy(() => import("../Pages/WalletList"));
+const Transactions = React.lazy(() => import("../Pages/Transactions"));
 
 const navRoutes = [
   {
@@ -7,7 +10,7 @@ const navRoutes = [
   },
   {
     path: "transactions",
-    component: WalletList,
+    component: Transactions,
   },
 ];
 

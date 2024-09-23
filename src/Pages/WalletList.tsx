@@ -1,29 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Table, Button, Modal, Input, message } from "antd";
 import { DeleteOutlined, PlusCircleFilled } from "@ant-design/icons";
-import { Sidebar } from "../Components";
-import axios from "axios";
 import BitcoinIcon from "../Assets/BitcoinIcon";
-const API_KEY = process.env.REACT_APP_BLOCKCYPHER_API_KEY;
-
-interface Wallet {
-  id: string;
-  name: string;
-  address: string;
-  balance: number;
-}
-
-interface Transaction {
-  txid: string;
-  amount: number;
-  confirmations: number;
-  time: string;
-}
-
-interface SyncItem {
-  type: "balance" | "history";
-  walletId: string;
-}
+import fetchBalance from "../Apis/fetchBalance";
+import fetchTransactions from "../Apis/fetchTransactions";
+import { useRecoilState } from "recoil";
+import { walletsState, syncQueueState, syncStatusState } from "../Recoil/atoms";
+import { Wallet, SyncItem } from "../Types";
 
 const data = [
   { key: "1", coin: "BITCOIN", holding: "BTC 0.00256" },
@@ -33,40 +16,38 @@ const data = [
   { key: "5", coin: "BITCOIN 4", holding: "BTC 0.00256" },
 ];
 
+const columns = [
+  {
+    title: "Coin",
+    dataIndex: "coin",
+    key: "coin",
+    render: (text: string) => (
+      <div className="flex gap-2 items-center">
+        <BitcoinIcon />
+        <span className="text-gray-400">{text}</span>
+      </div>
+    ),
+  },
+  {
+    title: "Holding",
+    dataIndex: "holding",
+    key: "holding",
+    render: (text: string) => <span className="text-gray-400">{text}</span>,
+  },
+  {
+    title: "Actions",
+    key: "actions",
+    render: () => (
+      <DeleteOutlined className="text-gray-400 hover:text-gray-400 cursor-pointer" />
+    ),
+  },
+];
+
 const WalletList: React.FC = () => {
-  const columns = [
-    {
-      title: "Coin",
-      dataIndex: "coin",
-      key: "coin",
-      render: (text: string) => (
-        <div className="flex gap-2 items-center">
-          <BitcoinIcon />
-          {/* <div className="w-8 h-8 rounded-full bg-yellow-900 flex items-center justify-center mr-3">
-            <span className="text-yellow-400 font-bold text-lg">₿</span>
-          </div> */}
-          <span className="text-gray-400 ">{text}</span>
-        </div>
-      ),
-    },
-    {
-      title: "Holding",
-      dataIndex: "holding",
-      key: "holding",
-      render: (text: string) => <span className="text-gray-400 ">{text}</span>,
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: () => (
-        <DeleteOutlined className="text-gray-400 hover:text-gray-400 cursor-pointer " />
-      ),
-    },
-  ];
-  const [wallets, setWallets] = useState<Wallet[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [syncQueue, setSyncQueue] = useState<SyncItem[]>([]);
-  const [syncStatus, setSyncStatus] = useState<"Syncing" | "Synced">("Synced");
+  const [wallets, setWallets] = useRecoilState<Wallet[]>(walletsState);
+  const [syncQueue, setSyncQueue] = useRecoilState<SyncItem[]>(syncQueueState);
+  const [syncStatus, setSyncStatus] = useRecoilState<string>(syncStatusState);
+
   const [isImportModalVisible, setIsImportModalVisible] = useState(false);
   const [mnemonic, setMnemonic] = useState("");
   const [walletName, setWalletName] = useState("");
@@ -75,65 +56,74 @@ const WalletList: React.FC = () => {
     message: "",
   });
 
+  const fetchBalanceHandler = async (walletId: string) => {
+    try {
+      if (!walletId) throw new Error("Wallet ID not found");
+      const wallet = wallets.find((w) => w.id === walletId);
+      if (wallet) {
+        const response: any = await fetchBalance(wallet.address);
+        if (!response.status) throw response;
+        setWallets((prev) =>
+          prev.map((w) =>
+            w.id === walletId
+              ? { ...w, balance: response.data.balance / 100000000 }
+              : w
+          )
+        );
+      }
+    } catch (error: any) {
+      console.error("Failed to fetch balance:", error);
+      message.error(error?.message || "Failed to fetch balance");
+    }
+  };
+
+  const fetchTransactionsHandler = async (walletId: string) => {
+    try {
+      if (!walletId) throw new Error("Wallet ID not found");
+      const wallet = wallets.find((w) => w.id === walletId);
+      if (wallet) {
+        const response: any = await fetchTransactions(wallet.address);
+        if (!response.status) throw response;
+        const newTransactions = response.data.txs.map((tx: any) => ({
+          txid: tx.hash,
+          amount: tx.outputs[0].value / 100000000,
+          confirmations: tx.confirmations,
+          time: new Date(tx.received).toLocaleString(),
+          wallet: wallet.name,
+          status: tx.confirmations ? "SUCCESS" : "FAILED",
+        }));
+        setSyncQueue((prev) => [...prev, ...newTransactions]);
+      }
+    } catch (error: any) {
+      console.error("Failed to fetch transactions:", error);
+      message.error(error?.message || "Failed to fetch transactions");
+    }
+  };
+
   const processQueue = async () => {
     if (syncQueue.length > 0 && syncStatus === "Synced") {
       setSyncStatus("Syncing");
       const item = syncQueue[0];
       try {
         if (item.type === "balance") {
-          await fetchBalance(item.walletId);
+          await fetchBalanceHandler(item.walletId);
         } else {
-          await fetchTransactions(item.walletId);
+          await fetchTransactionsHandler(item.walletId);
         }
         setSyncQueue((prev) => prev.slice(1));
-        await new Promise((resolve) => setTimeout(resolve, 200)); // 0.2 second delay
+        await new Promise((resolve) => setTimeout(resolve, 200));
         processQueue();
       } catch (error) {
         console.error("Sync failed:", error);
-        // Implement retry logic here
-        setSyncQueue((prev) => [...prev.slice(1), item]); // Move failed item to end of queue
+        setSyncQueue((prev) => [...prev, item]);
       }
     } else if (syncQueue.length === 0 && syncStatus === "Syncing") {
       setSyncStatus("Synced");
     }
   };
 
-  const fetchBalance = async (walletId: string) => {
-    const wallet = wallets.find((w) => w.id === walletId);
-    if (wallet) {
-      const response = await axios.get(
-        `https://api.blockcypher.com/v1/btc/test3/addrs/${wallet.address}/balance?token=${API_KEY}`
-      );
-      setWallets((prev) =>
-        prev.map((w) =>
-          w.id === walletId
-            ? { ...w, balance: response.data.balance / 100000000 }
-            : w
-        )
-      );
-    }
-  };
-
-  const fetchTransactions = async (walletId: string) => {
-    const wallet = wallets.find((w) => w.id === walletId);
-    if (wallet) {
-      const response = await axios.get(
-        `https://api.blockcypher.com/v1/btc/test3/addrs/${wallet.address}/full?token=${API_KEY}`
-      );
-      const newTransactions = response.data.txs.map((tx: any) => ({
-        txid: tx.hash,
-        amount: tx.outputs[0].value / 100000000,
-        confirmations: tx.confirmations,
-        time: new Date(tx.received).toLocaleString(),
-      }));
-      setTransactions((prev) => [...prev, ...newTransactions]);
-    }
-  };
-
   const importWallet = async () => {
     try {
-      // In a real application, you'd use a library like bitcoinjs-lib to derive the address from the mnemonic
-      // This is a placeholder implementation
       const address = `testnet-address-${Math.random()
         .toString(36)
         .substring(7)}`;
@@ -149,6 +139,7 @@ const WalletList: React.FC = () => {
         { type: "balance", walletId: newWallet.id },
         { type: "history", walletId: newWallet.id },
       ]);
+
       setIsImportModalVisible(false);
       setMnemonic("");
       setWalletName("");
@@ -251,6 +242,7 @@ const WalletList: React.FC = () => {
                 value={walletName}
                 onChange={(e) => setWalletName(e.target.value)}
                 className="mt-1 block w-full bg-gray-800 border-gray-700 text-white"
+                placeholder="Enter Wallet name"
               />
             </div>
             <div>
@@ -266,6 +258,7 @@ const WalletList: React.FC = () => {
                 onChange={(e) => setMnemonic(e.target.value)}
                 className="mt-1 block w-full bg-gray-800 border-gray-700 text-white"
                 rows={4}
+                placeholder="Enter mnemonic"
               />
             </div>
             {error.status && (

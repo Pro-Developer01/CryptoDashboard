@@ -1,8 +1,8 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { Home } from "./Pages";
 import navRoutes from "./Routes/routes";
-// import { Provider } from "react-redux";
-// import { store } from "./store";
+import { RecoilRoot } from "recoil";
+import { Suspense } from "react";
 
 interface routeType {
   path: string;
@@ -11,25 +11,29 @@ interface routeType {
 
 const App = () => {
   return (
-    // <Provider store={store}>
-    <Router>
-      <Routes>
-        <Route path="/" element={<Home />}>
-          {navRoutes?.map((route: routeType, index: number) => {
-            const routProps = {
-              path: route.path,
-              Component: route.component,
-            };
-            if (index === 0) {
-              return <Route index key={route.path + index} {...routProps} />;
-            } else {
-              return <Route key={route.path + index} {...routProps} />;
-            }
-          })}
-        </Route>
-      </Routes>
-    </Router>
-    // </Provider>
+    <RecoilRoot>
+      <Suspense fallback={<div>Loading...</div>}>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Home />}>
+              {navRoutes?.map((route: routeType, index: number) => {
+                const routProps = {
+                  path: route.path,
+                  Component: route.component,
+                };
+                if (index === 0) {
+                  return (
+                    <Route index key={route.path + index} {...routProps} />
+                  );
+                } else {
+                  return <Route key={route.path + index} {...routProps} />;
+                }
+              })}
+            </Route>
+          </Routes>
+        </Router>
+      </Suspense>
+    </RecoilRoot>
   );
 };
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Table, Button, Modal, Input, message } from "antd";
+import { Button, Modal, Input, message } from "antd";
 import { DeleteOutlined, PlusCircleFilled } from "@ant-design/icons";
 import BitcoinIcon from "../Assets/BitcoinIcon";
 import fetchBalance from "../Apis/fetchBalance";
@@ -8,6 +8,7 @@ import { useRecoilState } from "recoil";
 import { walletsState, syncQueueState, syncStatusState } from "../Recoil/atoms";
 import { Wallet, SyncItem } from "../Types";
 import CustomTable from "../Components/CustomTable";
+import { getBitcoinAddresses } from "../utils/getWalletAddress";
 
 const data = [
   { key: "1", coin: "BITCOIN", holding: "BTC 0.00256" },
@@ -125,13 +126,14 @@ const WalletList: React.FC = () => {
 
   const importWallet = async () => {
     try {
+      // const address = await getBitcoinAddresses(mnemonic, 1);
       const address = `testnet-address-${Math.random()
         .toString(36)
         .substring(7)}`;
       const newWallet: Wallet = {
         id: Math.random().toString(36).substring(7),
         name: walletName,
-        address: address,
+        address: address || "",
         balance: 0,
       };
       setWallets((prev) => [...prev, newWallet]);
@@ -201,14 +203,19 @@ const WalletList: React.FC = () => {
         </span>
         <CustomTable columns={columns} dataSource={data} />
         <Modal
-          title="Import Wallet"
           visible={isImportModalVisible}
           onOk={importWallet}
           onCancel={() => setIsImportModalVisible(false)}
           footer={null}
-          className="bg-gray-900 text-white"
+          className="!bg-gray-900 text-white"
         >
           <div className="space-y-4">
+            <div
+              className="text-center text-2xl !text-white"
+              style={{ color: "white" }}
+            >
+              Import Wallet
+            </div>
             <div>
               <label
                 htmlFor="walletName"
@@ -253,6 +260,15 @@ const WalletList: React.FC = () => {
             </div>
           </div>
         </Modal>
+        <style>{`
+        :where(.css-dev-only-do-not-override-14qglws).ant-modal .ant-modal-content {
+        background-color: #0A1018 !important;
+        }
+
+        :where(.css-dev-only-do-not-override-14qglws).ant-btn-primary.ant-btn-solid{
+        background-color: #494A4C !important;
+        }
+        `}</style>
       </div>
     </div>
   );
